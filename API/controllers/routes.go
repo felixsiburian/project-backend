@@ -1,6 +1,8 @@
 package controllers
 
-import "project-backend/API/middleware"
+import (
+	"project-backend/API/middleware"
+)
 
 func (s *Server) InitializeRoutes() {
 	//Home ROute

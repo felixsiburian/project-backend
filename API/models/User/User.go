@@ -1,4 +1,4 @@
-package models
+package User
 
 import (
 	"errors"
@@ -12,12 +12,13 @@ import (
 )
 
 type User struct {
-	Id uint32 `gorm:"primary_key;auto_increment" json:"id"`
-	//PhoneNumber string    `gorm:"size:255;not null; unique" json:"phone_number"`
-	Email     string    `gorm:"size:100; no null; unique" json:"email"`
-	Password  string    `gorm:"size:100; not null"json:"password"`
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"json:"updated_at"`
+	Id         uint32    `gorm:"primary_key;auto_increment" json:"id"`
+	Email      string    `gorm:"size:100; no null; unique" json:"email"`
+	Password   string    `gorm:"size:100; not null"json:"password"`
+	Role       UserRole  `json:"role"`
+	UserRoleId uint32    `json:"user_role_id"`
+	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP"json:"updated_at"`
 }
 
 func Hash(password string) ([]byte, error) {
@@ -92,6 +93,13 @@ func (u *User) SaveUser(db *gorm.DB) (*User, error) {
 		log.Fatal(err)
 		return &User{}, err
 	}
+	if u.UserRoleId != 0 {
+		err = db.Debug().Model(&UserRole{}).Where("role_id = ? ", u.UserRoleId).Take(&u.Role).Error
+		if err != nil {
+			log.Fatal("err ", err)
+			return &User{},err
+		}
+	}
 	return u, nil
 }
 
@@ -103,6 +111,16 @@ func (u *User) FindAllUser(db *gorm.DB) (*[]User, error) {
 		log.Fatal(err)
 		return &[]User{}, err
 	}
+
+	if len(users) > 0 {
+		for i, _ := range users {
+			err := db.Debug().Model(&UserRole{}).Where("role_id = ? ", users[i].UserRoleId).Take(&users[i].Role).Error
+			if err != nil {
+				return &[]User{}, err
+			}
+		}
+	}
+
 	return &users, err
 }
 
@@ -117,10 +135,16 @@ func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 		log.Fatal(err)
 		return &User{}, errors.New("User Not Found")
 	}
+	if u.UserRoleId != 0 {
+		err = db.Debug().Model(&UserRole{}).Where("role_id = ?", u.UserRoleId).Take(&u.Role).Error
+		if err != nil {
+			return &User{}, err
+		}
+	}
 	return u, err
 }
 
-func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
+func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (string, error) {
 	//hash password
 	err := u.BeforeSave()
 	if err != nil {
@@ -130,23 +154,32 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 		map[string]interface{}{
 			"password":  u.Password,
 			"email":     u.Email,
-			"update_at": time.Now(),
+			"user_role_id" : u.UserRoleId,
+			"updated_at": time.Now(),
 		},
 	)
 
 	if db.Error != nil {
-		return &User{}, db.Error
+		return "Error", db.Error
 	}
 
 	//tampilkan update user
-	err = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&u).Error
-	if err != nil {
-		return &User{}, err
-	}
-	return u, nil
+	//err = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&u).Error
+	//if err != nil {
+	//	return &User{}, err
+	//}
+	//
+	//if u.UserRoleId != 0 {
+	//	err = db.Debug().Model(&UserRole{}).Where("role_id = ?", u.UserRoleId).Take(&u.Role).Error
+	//	if err != nil {
+	//		return &User{}, err
+	//	}
+	//}
+
+	return "Update Succesfull", nil
 }
 
-func (u *User) DeleteAUser(db *gorm.DB, uid uint32)(int64 , error){
+func (u *User) DeleteAUser(db *gorm.DB, uid uint32) (int64, error) {
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).Delete(&User{})
 	if db.Error != nil {
 		log.Fatal(db.Error)

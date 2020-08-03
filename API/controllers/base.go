@@ -6,7 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"log"
 	"net/http"
-	"project-backend/API/models"
+	"project-backend/API/models/User"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"    //mysql database driver
 	_ "github.com/jinzhu/gorm/dialects/postgres" //postgres database driver
@@ -46,7 +46,11 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 		fmt.Println("siap")
 	}
 
-	server.DB.Debug().AutoMigrate(&models.User{})
+	server.DB.Debug().AutoMigrate(&User.User{}, &User.UserRole{})
+	role := User.UserRole{
+		UserRole: "User",
+	}
+	server.DB.Create(&role)
 
 	server.Router = mux.NewRouter()
 

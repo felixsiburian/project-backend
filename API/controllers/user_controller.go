@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"project-backend/API/auth"
-	"project-backend/API/models"
+	"project-backend/API/models/User"
 	"project-backend/API/responses"
 	"project-backend/API/utils/formaterror"
 	"strconv"
@@ -20,7 +20,7 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 	}
 
-	user := models.User{}
+	user := User.User{}
 	err = json.Unmarshal(body, &user)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
@@ -46,7 +46,7 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
-	user := models.User{}
+	user := User.User{}
 
 	users, err := user.FindAllUser(server.DB)
 	if err != nil {
@@ -64,7 +64,7 @@ func (server *Server) GetUser (w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := models.User{}
+	user := User.User{}
 	userGotten, err := user.FindUserByID(server.DB, uint32(uid))
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
@@ -86,7 +86,7 @@ func(server *Server) UpdateUser(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	user := models.User{}
+	user := User.User{}
 	err = json.Unmarshal(body, &user)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
@@ -119,7 +119,7 @@ func(server *Server) UpdateUser(w http.ResponseWriter, r *http.Request){
 func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	user := models.User{}
+	user := User.User{}
 
 	uid, err := strconv.ParseUint(vars["id"],10,32)
 	if err != nil {

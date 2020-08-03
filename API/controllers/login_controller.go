@@ -1,14 +1,14 @@
 package controllers
 
 import (
-	"golang.org/x/crypto/bcrypt"
-	"project-backend/API/auth"
-	"project-backend/API/utils/formaterror"
 	"encoding/json"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/http"
-	"project-backend/API/models"
+	"project-backend/API/auth"
+	"project-backend/API/models/User"
 	"project-backend/API/responses"
+	"project-backend/API/utils/formaterror"
 )
 
 func (server *Server) Login (w http.ResponseWriter, r *http.Request) {
@@ -17,7 +17,7 @@ func (server *Server) Login (w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	user := models.User{}
+	user := User.User{}
 	err = json.Unmarshal(body, &user)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
@@ -43,16 +43,16 @@ func (server *Server) Login (w http.ResponseWriter, r *http.Request) {
 func (server *Server) SignIn(email, password string) (string, error){
 	var err error
 
-	user := models.User{}
+	user := User.User{}
 
-	err = server.DB.Debug().Model(models.User{}).Where("email = ?",email).Take(&user).Error
+	err = server.DB.Debug().Model(User.User{}).Where("email = ?",email).Take(&user).Error
 	if err != nil {
-		return "", nil
+		return "Email Not Found", http.ErrBodyNotAllowed
 	}
 
-	err = models.VerifyPassword(user.Password, password)
+	err = User.VerifyPassword(user.Password, password)
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword{
-		return "", err
+		return "Password wrong. Try Again", http.ErrBodyNotAllowed
 	}
 
 	return auth.CreateToken(user.Id)
