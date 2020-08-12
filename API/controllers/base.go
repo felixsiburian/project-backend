@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"log"
 	"net/http"
+	"project-backend/API/models/Employee"
 	"project-backend/API/models/User"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"    //mysql database driver
@@ -46,7 +47,7 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 		fmt.Println("siap")
 	}
 
-	server.DB.Debug().AutoMigrate(&User.User{}, &User.UserRole{})
+	server.DB.Debug().AutoMigrate(&User.User{}, &User.UserRole{}, &Employee.Employee{})
 	role := User.UserRole{
 		UserRole: "User",
 	}
